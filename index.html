@@ -1,0 +1,512 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Maldives Blue Carbon Registry</title>
+<meta name="description" content="Working prototype of a national blue carbon registry and tokenization platform for the Maldives, by Ideofuzion.">
+<meta name="robots" content="noindex">
+</head>
+<body>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@600;700;800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: fixed navy sidebar, scrolling main column; cards only for discrete objects (KPIs, listings, drawers). */
+:root{
+  --bg:#F3F6F8; --surface:#FFFFFF; --surface-2:#EAF0F4; --line:#D9E2E8; --fg:#14213D; --muted:#5B6B7F;
+  --navy:#0B2545; --navy-fg:#CFE6EC; --teal:#1C7293; --sea:#00A896; --orange:#F77F00; --orange-fg:#FFFFFF;
+  --good-bg:#E3F4F0; --good-fg:#00704F; --warn-bg:#FFF1DC; --warn-fg:#B25B00; --info-bg:#E6F0F7; --info-fg:#1C5D8A; --purple-bg:#EEE8FB; --purple-fg:#5B3FA6;
+  --display:'Manrope',system-ui,sans-serif; --body:'IBM Plex Sans',system-ui,sans-serif; --mono:'IBM Plex Mono',ui-monospace,monospace;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){ --bg:#0E1626; --surface:#162236; --surface-2:#1E2D45; --line:#2B3C55; --fg:#E8EEF4; --muted:#9FB0C3; --navy:#081A33; --navy-fg:#B9D3DD; --teal:#5FB0D1; --sea:#2EC4AE; --good-bg:#153B33; --good-fg:#7FE0C3; --warn-bg:#3F2A10; --warn-fg:#FFC27A; --info-bg:#17304A; --info-fg:#8FC3F0; --purple-bg:#2B2347; --purple-fg:#C7B6F5; color-scheme:dark } }
+:root[data-theme="dark"]{ --bg:#0E1626; --surface:#162236; --surface-2:#1E2D45; --line:#2B3C55; --fg:#E8EEF4; --muted:#9FB0C3; --navy:#081A33; --navy-fg:#B9D3DD; --teal:#5FB0D1; --sea:#2EC4AE; --good-bg:#153B33; --good-fg:#7FE0C3; --warn-bg:#3F2A10; --warn-fg:#FFC27A; --info-bg:#17304A; --info-fg:#8FC3F0; --purple-bg:#2B2347; --purple-fg:#C7B6F5; color-scheme:dark }
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--body);font-size:14px;line-height:1.45}
+*{box-sizing:border-box}
+button,input,select{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--orange);outline-offset:2px}
+.app{display:flex;min-height:100%}
+.side{width:240px;flex-shrink:0;background:var(--navy);color:var(--navy-fg);display:flex;flex-direction:column;padding:22px 14px;gap:22px;position:sticky;top:env(safe-area-inset-top,0px);height:100vh}
+.brand{display:flex;align-items:center;gap:10px;padding:0 6px}
+.brand img{width:28px;height:42px;object-fit:contain}
+.brand b{display:block;font-family:var(--display);font-weight:800;font-size:13px;color:#fff;line-height:1.2}
+.brand small{font-size:11px;color:#8FB8C9}
+.nav{display:flex;flex-direction:column;gap:3px}
+.nav a{display:flex;align-items:center;gap:11px;padding:10px 12px;border-radius:8px;color:var(--navy-fg);text-decoration:none;font-size:13.5px;font-weight:500}
+.nav a svg{width:18px;height:18px;flex-shrink:0}
+.nav a.active{background:rgba(255,255,255,.13);color:#fff;font-weight:600}
+.nav a:hover{background:rgba(255,255,255,.08);color:#fff}
+.side .env{margin-top:auto;padding:12px;border-radius:10px;background:rgba(255,255,255,.07);font-size:12px;color:#9FC5D8}
+.side .env b{display:block;color:#fff;font-size:13px;margin:4px 0}
+.side .env button{margin-top:8px;width:100%;padding:7px;border-radius:6px;border:1px solid rgba(255,255,255,.25);background:transparent;color:#fff;font-size:12px}
+main{flex-grow:1;min-width:0;padding-block:22px;padding-inline:28px;display:flex;flex-direction:column;gap:18px}
+.top{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.top h1{margin:0;font-family:var(--display);font-size:22px;font-weight:800;color:var(--fg)}
+.top .sub{font-size:12.5px;color:var(--muted);margin-top:2px}
+.top .grow{flex-grow:1;min-width:0}
+.role{display:flex;align-items:center;gap:8px;padding:5px 6px 5px 12px;border:1px solid var(--line);border-radius:999px;background:var(--surface);font-size:12.5px}
+.role select{border:0;background:transparent;font-weight:600;padding:4px 2px}
+.grid{display:grid;gap:14px}
+.g4{grid-template-columns:repeat(4,minmax(0,1fr))}
+.g3{grid-template-columns:repeat(3,minmax(0,1fr))}
+.g2{grid-template-columns:repeat(2,minmax(0,1fr))}
+.span2{grid-column:span 2}
+@media (max-width:1100px){.g4{grid-template-columns:repeat(2,minmax(0,1fr))}.g3{grid-template-columns:1fr}.span2{grid-column:span 1}}
+@media (max-width:760px){.app{flex-direction:column}.side{width:100%;height:auto;position:static;flex-direction:row;flex-wrap:wrap;align-items:center}.nav{flex-direction:row;flex-wrap:wrap}.nav a span{display:none}.side .env{display:none}.g4,.g2{grid-template-columns:1fr}main{padding-inline:16px}}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px 18px;min-width:0}
+.kpi .l{font-size:12px;color:var(--muted);font-weight:500}
+.kpi .v{font-family:var(--display);font-size:26px;font-weight:800;margin:4px 0 2px;font-variant-numeric:tabular-nums}
+.kpi .d{font-size:12px;color:var(--teal)}
+h2{margin:0 0 10px;font-family:var(--display);font-size:15px;font-weight:700}
+.row{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.pill{display:inline-block;padding:3px 9px;border-radius:999px;font-size:11px;font-weight:600;white-space:nowrap}
+.p-good{background:var(--good-bg);color:var(--good-fg)} .p-warn{background:var(--warn-bg);color:var(--warn-fg)} .p-info{background:var(--info-bg);color:var(--info-fg)} .p-purple{background:var(--purple-bg);color:var(--purple-fg)} .p-muted{background:var(--surface-2);color:var(--muted)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;height:38px;padding:0 15px;border-radius:8px;border:1px solid var(--line);background:var(--surface);font-weight:600;font-size:13px;text-decoration:none;color:var(--fg)}
+.btn.primary{background:var(--orange);border-color:var(--orange);color:var(--orange-fg)}
+.btn.navy{background:var(--navy);border-color:var(--navy);color:#fff}
+.btn.sm{height:30px;padding:0 10px;font-size:12px}
+.btn[disabled]{opacity:.5;cursor:not-allowed}
+.input,select.input{height:38px;padding:0 12px;border:1px solid var(--line);border-radius:8px;background:var(--surface);width:100%}
+label.lbl{display:block;font-size:12px;font-weight:600;margin-bottom:5px}
+.sr{position:absolute;left:-9999px}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{text-align:left;font-size:11px;letter-spacing:.5px;text-transform:uppercase;color:var(--muted);font-weight:600;padding:8px 10px;background:var(--surface-2)}
+td{padding:11px 10px;border-top:1px solid var(--line);vertical-align:middle}
+tr.sel td{background:var(--info-bg)}
+tr.click{cursor:pointer}
+.mono{font-family:var(--mono);font-size:12px}
+.tabular{font-variant-numeric:tabular-nums}
+.tbl-wrap{overflow-x:auto}
+.bar{height:6px;background:var(--surface-2);border-radius:3px;overflow:hidden}.bar i{display:block;height:100%;background:var(--sea);border-radius:3px}
+.alert{display:flex;gap:10px;padding:11px 12px;border-radius:10px;font-size:12.5px}
+.alert i{width:9px;height:9px;border-radius:50%;margin-top:5px;flex-shrink:0}
+.feed div{padding:8px 0;border-top:1px solid var(--line);font-size:12.5px;display:flex;gap:10px}
+.feed span.t{color:var(--muted);width:48px;flex-shrink:0}
+.steps{display:flex;gap:0;align-items:flex-start}
+.steps .s{flex:1;display:flex;flex-direction:column;gap:6px;min-width:0}
+.steps .s .h{display:flex;align-items:center}
+.steps .s .n{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff;background:var(--surface-2);color:var(--muted);flex-shrink:0}
+.steps .s .ln{flex:1;height:2px;background:var(--line)}
+.steps .s.done .n,.steps .s.done .ln{background:var(--sea);color:#fff}
+.steps .s.cur .n{background:var(--orange);color:#fff}
+.steps .s b{font-size:12px}.steps .s small{font-size:11px;color:var(--muted)}
+.listing{display:flex;gap:16px;align-items:center;padding:14px;border:1px solid var(--line);border-radius:12px;background:var(--surface);text-align:left;width:100%}
+.listing.sel{border:2px solid var(--orange)}
+.listing .sw{width:120px;height:90px;border-radius:10px;flex-shrink:0;display:flex;align-items:flex-end;padding:8px}
+.listing .sw span{background:rgba(255,255,255,.92);color:#0B2545;font-size:11px;font-weight:600;padding:2px 7px;border-radius:5px}
+.listing .px{font-family:var(--display);font-size:20px;font-weight:800;white-space:nowrap}
+.qty{display:flex;gap:8px;align-items:center}.qty button{width:40px;height:40px;border-radius:8px;border:1px solid var(--line);background:var(--surface);font-size:18px}.qty div{flex:1;height:40px;border:1px solid var(--line);border-radius:8px;display:flex;align-items:center;justify-content:center;font-family:var(--display);font-size:18px;font-weight:800}
+.tog{display:flex;align-items:center;gap:10px;padding:10px;border:1px solid var(--line);border-radius:10px;background:var(--surface);width:100%;text-align:left}
+.tog .k{width:38px;height:22px;border-radius:11px;padding:2px;background:#C9D3DB;display:flex;flex-shrink:0}.tog .k i{width:18px;height:18px;border-radius:50%;background:#fff}.tog.on .k{background:var(--sea);justify-content:flex-end}
+.cert{background:var(--surface);border-radius:16px;overflow:hidden;display:flex;border:1px solid var(--line)}
+.cert .left{width:300px;flex-shrink:0;background:#1C7293;color:#fff;padding:30px 26px;display:flex;flex-direction:column;gap:18px}
+.cert .left .big{font-family:var(--display);font-size:50px;font-weight:800;line-height:1}
+.cert .right{flex:1;padding:30px 32px;display:flex;flex-direction:column;gap:16px;min-width:0}
+@media (max-width:760px){.cert{flex-direction:column}.cert .left{width:100%}}
+.toast{position:fixed;right:18px;bottom:calc(18px + env(safe-area-inset-bottom,0px));background:var(--navy);color:#fff;padding:12px 16px;border-radius:10px;font-size:13px;box-shadow:0 10px 30px rgba(0,0,0,.25);max-width:360px;z-index:50}
+.modal-bg{position:fixed;inset:0;background:rgba(5,15,30,.55);display:flex;align-items:center;justify-content:center;z-index:40;padding:16px}
+.modal{background:var(--surface);border-radius:14px;padding:22px;width:460px;max-width:100%;display:flex;flex-direction:column;gap:14px}
+.phone{width:380px;max-width:100%;margin:0 auto;background:var(--surface);border:1px solid var(--line);border-radius:28px;padding:18px;display:flex;flex-direction:column;gap:12px}
+.chart{width:100%;height:190px;display:block}
+.muted{color:var(--muted)}.small{font-size:12px}
+.kv{display:grid;grid-template-columns:150px 1fr;gap:6px 14px;font-size:13px}.kv .k{color:var(--muted)}
+canvas{max-width:100%}
+@media (prefers-reduced-motion:no-preference){.toast{animation:up .25s ease}}@keyframes up{from{transform:translateY(8px);opacity:0}to{transform:none;opacity:1}}
+</style>
+
+<div class="app" id="app"></div>
+<div id="overlay"></div>
+
+<script>
+const LOGO = "data:image/png;base64,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";
+const ICONS = {
+  overview:'<rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/>',
+  projects:'<path d="M4 20c0-8 4-14 16-16-1 12-6 16-14 16"/><path d="M4 20l8-8"/>',
+  ledger:'<path d="M12 3l9 5-9 5-9-5 9-5z"/><path d="M3 13l9 5 9-5"/>',
+  market:'<path d="M6 8h12l1 12H5L6 8z"/><path d="M9 8V6a3 3 0 016 0v2"/>',
+  article6:'<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 010 18M12 3a14 14 0 000 18"/>',
+  certs:'<path d="M5 4h14v16l-3-2-2 2-2-2-2 2-2-2-3 2z"/><path d="M9 9h6M9 13h4"/>',
+  field:'<rect x="6" y="3" width="12" height="18" rx="2"/><path d="M11 17h2"/>'
+};
+const svg = (n) => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICONS[n]}</svg>`;
+const NAV = [['overview','Overview'],['projects','Projects and MRV'],['ledger','Credit ledger'],['market','Marketplace'],['article6','Article 6 and reporting'],['certs','Certificates'],['field','Ranger field app']];
+const fmt = (n, d=0) => Number(n).toLocaleString('en-US',{minimumFractionDigits:d,maximumFractionDigits:d});
+const hash = () => Array.from({length:8},()=>'0123456789abcdef'[Math.random()*16|0]).join('');
+const tx = () => '0x'+hash()+'…'+hash().slice(0,4);
+const now = () => new Date().toISOString();
+const timeStr = (iso) => { const d=new Date(iso); return d.toLocaleDateString('en-GB',{day:'numeric',month:'short'})+' '+d.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'}); };
+
+function seed(){
+  const t = Date.now();
+  const ago = (h) => new Date(t - h*3600e3).toISOString();
+  return {
+    role:'admin', view:'overview', selBatch:null, selProject:'p3', market:{listing:'p3',qty:250,retire:true}, cert:null, block:184203,
+    projects:[
+      {id:'p1',code:'MV-BC-0001',name:'Fuvahmulah Wetland Conservation',atoll:'Fuvahmulah',eco:'Mangrove',area:289,method:'VM0033 v2.0',vintage:2025,developer:'Fuvahmulah City Council',health:0.64,stockPerHa:393,annual:1600,buffer:0.20,price:46,status:'Validated',color:'#0B2545',cobenefits:'biodiversity, eco-tourism'},
+      {id:'p2',code:'MV-BC-0002',name:'Addu Hithadhoo Mangrove Restoration',atoll:'Addu',eco:'Mangrove and seagrass',area:3010,method:'VM0033 v2.0',vintage:2026,developer:'Addu City Council',health:0.79,stockPerHa:393,annual:2400,buffer:0.25,price:41,status:'Validated',color:'#00A896',cobenefits:'biodiversity, storm protection'},
+      {id:'p3',code:'MV-BC-0003',name:'Laamu Atoll Seagrass Conservation',atoll:'Laamu',eco:'Seagrass',area:2140,method:'VM0033 v2.0',vintage:2026,developer:'Laamu Atoll Council',health:0.86,stockPerHa:167,annual:3900,buffer:0.20,price:32,status:'Validated',color:'#1C7293',cobenefits:'fisheries, coastal protection'},
+      {id:'p4',code:'MV-BC-0004',name:'Noonu Kendhikulhudhoo Mangrove',atoll:'Noonu',eco:'Mangrove',area:275,method:'VM0033 v2.0',vintage:2026,developer:'Kendhikulhudhoo Council',health:0.81,stockPerHa:393,annual:1100,buffer:0.20,price:44,status:'Monitoring report pending',color:'#5B3FA6',cobenefits:'coastal protection'}
+    ],
+    batches:[
+      {id:'b1',serial:'MV-BC-0001-25-09-000001',project:'p1',qty:4180,status:'buffer',holder:'Buffer pool (locked)',vintage:2025,tx:'0x0c4d…91aa',ts:ago(700)},
+      {id:'b2',serial:'MV-BC-0001-25-09-004181',project:'p1',qty:640,status:'issued',holder:'MoTE issuance wallet',vintage:2025,tx:'0x0c4d…91ab',ts:ago(700)},
+      {id:'b3',serial:'MV-BC-0002-26-04-000001',project:'p2',qty:500,status:'retired',holder:'Resort wallet 0x19e4',vintage:2026,tx:'0xa5c3…40d1',ts:ago(240)},
+      {id:'b4',serial:'MV-BC-0002-26-04-000501',project:'p2',qty:700,status:'transferred',holder:'Corporate buyer 0x3b90',vintage:2026,tx:'0x6e12…f77b',ts:ago(290)},
+      {id:'b5',serial:'MV-BC-0002-26-05-000001',project:'p2',qty:1160,status:'issued',holder:'MoTE issuance wallet',vintage:2026,tx:'0x77aa…b3c2',ts:ago(170)},
+      {id:'b6',serial:'MV-BC-0003-26-02-000001',project:'p3',qty:12000,status:'authorised',holder:'Article 6 escrow, MoFP',vintage:2026,tx:'0x2c61…7e09',ts:ago(30)},
+      {id:'b7',serial:'MV-BC-0003-26-03-000001',project:'p3',qty:250,status:'transferred',holder:'Resort wallet 0x7a3c',vintage:2026,tx:'0x41b7…88d0',ts:ago(3)},
+      {id:'b8',serial:'MV-BC-0003-26-03-000251',project:'p3',qty:1.2,status:'retired',holder:'Guest, Villa 14',vintage:2026,tx:'0xd08a…12fe',ts:ago(2),cert:'c1'},
+      {id:'b9',serial:'MV-BC-0003-26-04-000001',project:'p3',qty:2870,status:'issued',holder:'MoTE issuance wallet',vintage:2026,tx:'0x9f2e…c41a',ts:ago(5)}
+    ],
+    events:[
+      {ts:ago(30),text:'<b>LoA drafted</b> · 12,000 t authorised for bilateral partner A'},
+      {ts:ago(5),text:'<b>Issued</b> 3,120 t · MV-BC-0003 batch 04, validator SGS'},
+      {ts:ago(4),text:'<b>Benefit share</b> paid · Laamu Atoll Council, USD 4,200'},
+      {ts:ago(3),text:'<b>Transferred</b> 250 t · resort buyer wallet 0x7a3c'},
+      {ts:ago(2),text:'<b>Retired</b> 1.2 t · guest checkout, Laamu vintage 2026'}
+    ],
+    alerts:[
+      {kind:'warn',title:'Salinity stress, Hithadhoo block B',text:'Canopy index fell 9% in 30 days. Field check requested from Addu council.'},
+      {kind:'good',title:'Sentinel-2 pass complete',text:'Laamu extent re-classified, 2,140 ha, no change beyond tolerance.'}
+    ],
+    evidence:[
+      {project:'p3',title:'Drone survey, Gaadhoo transect 3',meta:'Ranger team, 18 Sep 2026 · 412 frames · GPS locked'},
+      {project:'p3',title:'Sediment cores, batch 07',meta:'MNU lab · 12 cores · organic carbon 2.4% mean'},
+      {project:'p2',title:'Council monitoring log, week 38',meta:'Mobile app · 3 islands · no disturbance events'}
+    ],
+    loas:[
+      {id:'LoA-2026-01',partner:'Bilateral partner A, NDC use',use:'Article 6.2 cooperative approach · vintages 2026 to 2028',project:'p3',qty:12000,step:4,ca:0},
+      {id:'LoA-2026-02',partner:'Airline consortium, CORSIA',use:'Other international mitigation purposes · vintage 2026',project:'p2',qty:1500,step:1,ca:0},
+      {id:'LoA-2025-01',partner:'Voluntary market, no CA',use:'Contribution claims only · vintage 2025',project:'p1',qty:4180,step:6,ca:0}
+    ],
+    certs:[{id:'c1',batch:'b8',qty:1.2,project:'p3',for:'Guest, Villa 14',by:'[Resort name]',ts:ago(2),tx:'0xd08a…12fe',block:184203}],
+    monthly:[[1400,300],[1700,500],[2000,700],[2600,900],[2900,1200],[3300,1500],[3700,1800],[4400,2200],[3120,1200]]
+  };
+}
+
+let S;
+try { const raw = localStorage.getItem('bcr-demo-v2'); S = raw ? JSON.parse(raw) : seed(); } catch(e){ S = seed(); }
+function save(){ try{ localStorage.setItem('bcr-demo-v2', JSON.stringify(S)); }catch(e){} }
+function toast(msg){ const t=document.createElement('div'); t.className='toast'; t.textContent=msg; document.body.appendChild(t); setTimeout(()=>t.remove(),2800); }
+function log(text){ S.events.push({ts:now(),text}); S.block += 1; }
+function project(id){ return S.projects.find(p=>p.id===id); }
+function available(pid){ return S.batches.filter(b=>b.project===pid&&b.status==='issued').reduce((a,b)=>a+b.qty,0); }
+function nextSerial(pid){ const p=project(pid); const n=S.batches.filter(b=>b.project===pid).length+1; return `${p.code}-${String(p.vintage).slice(2)}-${String(n).padStart(2,'0')}-000001`; }
+function takeFromIssued(pid, qty){ // consume issued credits; returns ok
+  let need=qty; for(const b of S.batches){ if(b.project===pid&&b.status==='issued'&&need>0){ const take=Math.min(b.qty,need); b.qty=Math.round((b.qty-take)*10)/10; need-=take; } }
+  S.batches = S.batches.filter(b=>b.qty>0); return need<=0.0001;
+}
+function set(view){ S.view=view; location.hash=view; render(); }
+function confirmBox(title, body, okLabel, onOk){
+  const o=document.getElementById('overlay');
+  o.innerHTML=`<div class="modal-bg"><div class="modal" role="dialog" aria-label="${title}"><h2 style="margin:0">${title}</h2><div class="small">${body}</div><div class="row" style="justify-content:flex-end"><button class="btn" id="mCancel">Cancel</button><button class="btn primary" id="mOk">${okLabel}</button></div></div></div>`;
+  o.querySelector('#mCancel').onclick=()=>o.innerHTML='';
+  o.querySelector('#mOk').onclick=()=>{o.innerHTML=''; onOk();};
+}
+
+/* ---------- actions ---------- */
+function issue(pid, qty){
+  const p=project(pid); const buf=Math.round(qty*p.buffer); const net=qty-buf;
+  S.batches.push({id:'b'+hash(),serial:nextSerial(pid),project:pid,qty:buf,status:'buffer',holder:'Buffer pool (locked)',vintage:p.vintage,tx:tx(),ts:now()});
+  S.batches.push({id:'b'+hash(),serial:nextSerial(pid),project:pid,qty:net,status:'issued',holder:'MoTE issuance wallet',vintage:p.vintage,tx:tx(),ts:now()});
+  S.monthly[S.monthly.length-1][0]+=net;
+  log(`<b>Issued</b> ${fmt(net)} t · ${p.code}, ${fmt(buf)} t to buffer, validator SGS`);
+  toast(`${fmt(net)} tCO2e issued for ${p.code}. ${fmt(buf)} t held in buffer.`); save(); render();
+}
+function buy(){
+  const m=S.market, p=project(m.listing), qty=m.qty;
+  if(available(p.id)<qty){ toast('Not enough issued credits in this listing.'); return; }
+  takeFromIssued(p.id, qty);
+  const sub=qty*p.price, fee=Math.round(sub*0.02);
+  const id='b'+hash();
+  const b={id,serial:nextSerial(p.id),project:p.id,qty,status:m.retire?'retired':'transferred',holder:m.retire?'[Resort name], retired':'Resort wallet 0x7a3c',vintage:p.vintage,tx:tx(),ts:now()};
+  S.batches.push(b);
+  log(`<b>Transferred</b> ${fmt(qty)} t · ${p.code} to resort wallet 0x7a3c, USD ${fmt(sub+fee)}`);
+  log(`<b>Benefit share</b> paid · ${p.developer} USD ${fmt(sub*0.35)}, community fund USD ${fmt(sub*0.15)}, MoFP USD ${fmt(sub*0.40)}`);
+  S.monthly[S.monthly.length-1][1]+= m.retire?qty:0;
+  if(m.retire){ const c={id:'c'+hash().slice(0,6),batch:id,qty,project:p.id,for:'[Resort name], 2026 operations',by:'[Resort name]',ts:now(),tx:b.tx,block:S.block}; b.cert=c.id; S.certs.push(c); log(`<b>Retired</b> ${fmt(qty)} t · certificate ${c.id} issued`); S.cert=c.id; save(); set('certs'); toast(`Purchased and retired ${fmt(qty)} tCO2e. Certificate ${c.id} issued.`); }
+  else { save(); set('ledger'); toast(`Purchased ${fmt(qty)} tCO2e. Tokens are in your wallet.`); }
+}
+function retireBatch(id){
+  const b=S.batches.find(x=>x.id===id); const p=project(b.project);
+  b.status='retired'; b.tx=tx(); b.ts=now();
+  const c={id:'c'+hash().slice(0,6),batch:id,qty:b.qty,project:p.id,for:b.holder,by:b.holder,ts:now(),tx:b.tx,block:S.block}; b.cert=c.id; S.certs.push(c);
+  S.monthly[S.monthly.length-1][1]+=b.qty;
+  log(`<b>Retired</b> ${fmt(b.qty)} t · ${p.code}, certificate ${c.id}`); S.cert=c.id; save(); set('certs'); toast(`Retired ${fmt(b.qty)} tCO2e. Certificate issued.`);
+}
+function advanceLoa(id){
+  const l=S.loas.find(x=>x.id===id); const p=project(l.project);
+  if(l.step>=6) return;
+  l.step+=1;
+  if(l.step===5){ if(available(l.project)>=l.qty){ takeFromIssued(l.project,l.qty); S.batches.push({id:'b'+hash(),serial:nextSerial(l.project),project:l.project,qty:l.qty,status:'authorised',holder:'Article 6 escrow, MoFP',vintage:p.vintage,tx:tx(),ts:now()}); log(`<b>Authorised</b> ${fmt(l.qty)} t tagged and escrowed under ${l.id}`);} else { log(`<b>Authorisation</b> ${l.id}: insufficient issued credits to escrow, escrow pending`);} }
+  if(l.step===6){ l.ca=l.qty; const esc=S.batches.find(b=>b.project===l.project&&b.status==='authorised'); if(esc){esc.holder='Transferred to '+l.partner.split(',')[0]; esc.tx=tx(); esc.ts=now();} log(`<b>First transfer</b> ${fmt(l.qty)} ITMOs under ${l.id}, corresponding adjustment applied`); }
+  save(); render(); toast(`${l.id} moved to step ${l.step}.`);
+}
+function newLoa(){
+  const n=S.loas.filter(l=>l.id.startsWith('LoA-2026')).length+1;
+  S.loas.unshift({id:`LoA-2026-0${n}`,partner:'[Counterpart], NDC use',use:'Article 6.2 cooperative approach · vintage 2026',project:'p2',qty:1000,step:1,ca:0});
+  log(`<b>LoA drafted</b> · LoA-2026-0${n}, 1,000 t`); save(); render(); toast('Draft authorisation created.');
+}
+function submitField(pid, health, note, disturbance){
+  const p=project(pid); p.health=health;
+  S.evidence.unshift({project:pid,title:`Council monitoring log, ${p.atoll}`,meta:`Mobile app · health index ${health.toFixed(2)} · ${note||'no note'}`});
+  if(disturbance||health<0.7){ S.alerts.unshift({kind:'warn',title:`Field alert, ${p.atoll}`,text:`${disturbance?'Disturbance reported. ':''}Health index ${health.toFixed(2)}. MRV engine has flagged the block for review before next issuance.`}); }
+  else { S.alerts.unshift({kind:'good',title:`Field log accepted, ${p.atoll}`,text:`Health index ${health.toFixed(2)} matches satellite classification. Evidence pack updated.`}); }
+  S.alerts=S.alerts.slice(0,4);
+  log(`<b>Evidence</b> logged · ${p.code} field survey, health ${health.toFixed(2)}`); save(); render(); toast('Survey submitted to the registry.');
+}
+
+/* ---------- views ---------- */
+function kpis(){
+  const issued=S.batches.filter(b=>b.status!=='buffer').reduce((a,b)=>a+b.qty,0);
+  const retired=S.batches.filter(b=>b.status==='retired').reduce((a,b)=>a+b.qty,0);
+  const auth=S.batches.filter(b=>b.status==='authorised').reduce((a,b)=>a+b.qty,0);
+  const mapped=S.projects.reduce((a,p)=>a+p.area,0);
+  return {issued,retired,auth,mapped};
+}
+const pillFor = (s) => ({issued:'p-good',transferred:'p-info',retired:'p-warn',authorised:'p-purple',buffer:'p-muted'})[s];
+const statusLabel = (s) => ({issued:'Issued',transferred:'Transferred',retired:'Retired',authorised:'Authorised',buffer:'Buffer'})[s];
+
+function vOverview(){
+  const k=kpis();
+  return `<div class="top"><div class="grow"><h1>National registry overview</h1><div class="sub">Ministry of Tourism and Environment · Block ${fmt(S.block)} · 3 of 3 nodes in consensus</div></div>${roleCtl()}</div>
+  <div class="grid g4">
+    <div class="card kpi"><div class="l">Blue carbon mapped</div><div class="v">${fmt(k.mapped)} ha</div><div class="d">${S.projects.length} projects across ${new Set(S.projects.map(p=>p.atoll)).size} atolls</div></div>
+    <div class="card kpi"><div class="l">Verified credits issued</div><div class="v">${fmt(k.issued)} t</div><div class="d">tCO2e, buffer excluded</div></div>
+    <div class="card kpi"><div class="l">Retired on-chain</div><div class="v">${fmt(k.retired,1)} t</div><div class="d">${S.certs.length} certificates</div></div>
+    <div class="card kpi"><div class="l">Article 6 authorised</div><div class="v">${fmt(k.auth)} t</div><div class="d">${S.loas.filter(l=>l.step<6).length} authorisations in progress</div></div>
+  </div>
+  <div class="grid g3">
+    <div class="card span2"><div class="row" style="justify-content:space-between"><h2>Issuance and retirement, 2026 (tCO2e)</h2><div class="small muted"><span style="display:inline-block;width:10px;height:10px;background:var(--teal);border-radius:2px"></span> Issued &nbsp; <span style="display:inline-block;width:10px;height:10px;background:var(--orange);border-radius:2px"></span> Retired</div></div>
+      <canvas id="chart" class="chart" height="190"></canvas>
+      <h2 style="margin-top:14px">Atolls under monitoring</h2>
+      <div class="tbl-wrap"><table><thead><tr><th>Project</th><th>Ecosystem</th><th>Mapped area</th><th>Health index</th><th style="text-align:right">Available</th></tr></thead><tbody>
+      ${S.projects.map(p=>`<tr class="click" data-proj="${p.id}"><td><b>${p.atoll}</b><div class="small muted">${p.code}</div></td><td>${p.eco}</td><td class="tabular">${fmt(p.area)} ha</td><td><div class="row" style="flex-wrap:nowrap"><div class="bar" style="flex:1"><i style="width:${p.health*100}%;background:${p.health<0.7?'var(--orange)':'var(--sea)'}"></i></div><span class="tabular">${p.health.toFixed(2)}</span></div></td><td class="tabular" style="text-align:right"><b>${fmt(available(p.id))}</b></td></tr>`).join('')}
+      </tbody></table></div></div>
+    <div style="display:flex;flex-direction:column;gap:14px;min-width:0">
+      <div class="card"><h2>MRV alerts</h2><div style="display:flex;flex-direction:column;gap:8px">${S.alerts.map(a=>`<div class="alert" style="background:var(--${a.kind}-bg)"><i style="background:${a.kind==='warn'?'var(--orange)':'var(--sea)'}"></i><div><b>${a.title}</b><div class="muted">${a.text}</div></div></div>`).join('')}</div></div>
+      <div class="card"><div class="row" style="justify-content:space-between"><h2>Ledger activity</h2><a href="#ledger" class="small" style="font-weight:600;color:var(--teal)">View ledger</a></div><div class="feed">${S.events.slice(-6).reverse().map(e=>`<div><span class="t">${timeStr(e.ts).split(' ').slice(-1)[0]}</span><span>${e.text}</span></div>`).join('')}</div></div>
+    </div>
+  </div>`;
+}
+
+function vProjects(){
+  const p=project(S.selProject); const ev=S.evidence.filter(e=>e.project===p.id);
+  const canIssue = S.role==='admin' && p.status==='Validated';
+  return `<div class="top"><div class="grow"><div class="small muted">Projects / ${p.code}</div><div class="row"><h1>${p.name}</h1><span class="pill ${p.status==='Validated'?'p-good':'p-warn'}">${p.status}</span></div><div class="sub">${p.method} · Vintage ${p.vintage} · ${p.developer} with MoTE · Validator SGS</div></div>
+    <label class="sr" for="projSel">Project</label><select id="projSel" class="input" style="width:280px">${S.projects.map(x=>`<option value="${x.id}" ${x.id===p.id?'selected':''}>${x.code} ${x.atoll}</option>`).join('')}</select>
+    <button class="btn primary" id="issueBtn" ${canIssue?'':'disabled'} title="${S.role==='admin'?'':'Switch to Registry admin to issue'}">Request issuance</button></div>
+  <div class="grid g4">
+    <div class="card kpi"><div class="l">Mapped extent</div><div class="v">${fmt(p.area)} ha</div><div class="d">${p.eco}</div></div>
+    <div class="card kpi"><div class="l">Soil carbon stock</div><div class="v">${fmt(p.area*p.stockPerHa)} t C</div><div class="d">${p.stockPerHa} t C per ha</div></div>
+    <div class="card kpi"><div class="l">Annual reductions</div><div class="v">${fmt(p.annual*(1-p.buffer))} t</div><div class="d">after ${p.buffer*100}% buffer</div></div>
+    <div class="card kpi"><div class="l">Health index</div><div class="v">${p.health.toFixed(2)}</div><div class="d" style="color:${p.health<0.7?'var(--warn-fg)':'var(--good-fg)'}">${p.health<0.7?'Flagged for review':'Stable'}</div></div>
+  </div>
+  <div class="grid g3">
+    <div class="span2" style="display:flex;flex-direction:column;gap:14px;min-width:0">
+      <div class="card"><h2>Ecosystem extent by satellite pass (ha)</h2><canvas id="extent" class="chart" height="170"></canvas><div class="small muted">Baseline period in light, crediting period in teal, latest pass highlighted. Passes run every 10 days from Sentinel-2.</div></div>
+      <div class="card"><h2>Benefit sharing on every sale</h2><div style="display:flex;height:14px;border-radius:7px;overflow:hidden"><div style="width:40%;background:var(--navy)"></div><div style="width:35%;background:var(--teal)"></div><div style="width:15%;background:var(--sea)"></div><div style="width:10%;background:var(--orange)"></div></div><div class="row small muted" style="margin-top:8px;gap:18px"><span>State 40%</span><span>${p.developer} 35%</span><span>Community fund 15%</span><span>Platform and MRV 10%</span></div></div>
+      <div class="card"><h2>Credit batches</h2><div class="tbl-wrap"><table><thead><tr><th>Serial</th><th>Quantity</th><th>Status</th><th>Holder</th></tr></thead><tbody>${S.batches.filter(b=>b.project===p.id).map(b=>`<tr><td class="mono">${b.serial}</td><td class="tabular">${fmt(b.qty,b.qty%1?1:0)}</td><td><span class="pill ${pillFor(b.status)}">${statusLabel(b.status)}</span></td><td>${b.holder}</td></tr>`).join('')||'<tr><td colspan="4" class="muted">No batches yet</td></tr>'}</tbody></table></div></div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:14px;min-width:0">
+      <div class="card"><h2>Validation checklist</h2><div style="display:flex;flex-direction:column;gap:9px;font-size:13px">
+        ${['Carbon-rights title recorded','FPIC consultations, minutes attached','Additionality above Protected Areas Regulation','Baseline and leakage assessment signed'].map(t=>`<div class="row" style="flex-wrap:nowrap"><span style="width:20px;height:20px;border-radius:50%;background:var(--sea);color:#fff;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:11px">✓</span>${t}</div>`).join('')}
+        <div class="row" style="flex-wrap:nowrap"><span style="width:20px;height:20px;border-radius:50%;background:${p.status==='Validated'?'var(--sea)':'var(--warn-bg)'};color:${p.status==='Validated'?'#fff':'var(--warn-fg)'};display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:11px;font-weight:700">${p.status==='Validated'?'✓':'5'}</span>Monitoring report ${p.status==='Validated'?'accepted':'due 15 Jan 2027'}</div>
+      </div></div>
+      <div class="card"><h2>Field evidence</h2><div style="display:flex;flex-direction:column;gap:8px">${ev.length?ev.slice(0,5).map(e=>`<div style="padding:9px 10px;border-radius:8px;background:var(--surface-2)"><b style="font-size:13px">${e.title}</b><div class="small muted">${e.meta}</div></div>`).join(''):'<div class="small muted">No field evidence yet. Submit one from the ranger app.</div>'}</div><a href="#field" class="small" style="display:block;margin-top:10px;font-weight:600;color:var(--teal)">Open ranger field app</a></div>
+    </div>
+  </div>`;
+}
+
+function vLedger(){
+  const f=S.ledgerFilter||{status:'all',project:'all',q:''};
+  let rows=S.batches.slice().sort((a,b)=>b.ts.localeCompare(a.ts));
+  if(f.status!=='all') rows=rows.filter(b=>b.status===f.status);
+  if(f.project!=='all') rows=rows.filter(b=>b.project===f.project);
+  if(f.q) rows=rows.filter(b=>(b.serial+b.holder+b.tx).toLowerCase().includes(f.q.toLowerCase()));
+  const sel=S.batches.find(b=>b.id===S.selBatch)||rows[0];
+  return `<div class="top"><div class="grow"><h1>Credit ledger</h1><div class="sub">Every batch carries one serial range, one holder and one lifecycle state. Block ${fmt(S.block)} · 3 of 3 nodes in consensus</div></div>${roleCtl()}</div>
+  <div class="row">
+    <label class="sr" for="q">Search</label><input id="q" class="input" style="width:300px" placeholder="Serial, holder or transaction hash" value="${f.q}">
+    <label class="sr" for="fp">Project</label><select id="fp" class="input" style="width:220px"><option value="all">All projects</option>${S.projects.map(p=>`<option value="${p.id}" ${f.project===p.id?'selected':''}>${p.code} ${p.atoll}</option>`).join('')}</select>
+    <label class="sr" for="fs">Status</label><select id="fs" class="input" style="width:170px"><option value="all">All statuses</option>${['issued','transferred','retired','authorised','buffer'].map(s=>`<option value="${s}" ${f.status===s?'selected':''}>${statusLabel(s)}</option>`).join('')}</select>
+    <span class="small muted" style="margin-left:auto">${rows.length} batches</span></div>
+  <div class="grid g3">
+    <div class="card span2" style="padding:0;overflow:hidden"><div class="tbl-wrap"><table><thead><tr><th>Serial</th><th>Project</th><th>Qty</th><th>Status</th><th>Holder</th><th>Transaction</th><th>Time</th></tr></thead><tbody>
+      ${rows.map(b=>`<tr class="click ${sel&&b.id===sel.id?'sel':''}" data-batch="${b.id}"><td class="mono">${b.serial}</td><td>${project(b.project).atoll}</td><td class="tabular"><b>${fmt(b.qty,b.qty%1?1:0)}</b></td><td><span class="pill ${pillFor(b.status)}">${statusLabel(b.status)}</span></td><td>${b.holder}</td><td class="mono" style="color:var(--teal)">${b.tx}</td><td class="muted small">${timeStr(b.ts)}</td></tr>`).join('')||'<tr><td colspan="7" class="muted">No batches match.</td></tr>'}
+    </tbody></table></div></div>
+    <div class="card" style="display:flex;flex-direction:column;gap:12px">${sel?batchDrawer(sel):'<div class="muted">Select a batch</div>'}</div>
+  </div>`;
+}
+function batchDrawer(b){
+  const p=project(b.project); const cert=S.certs.find(c=>c.id===b.cert);
+  const canRetire = (b.status==='transferred') && (S.role==='buyer'||S.role==='admin');
+  return `<div><div class="small muted" style="text-transform:uppercase;letter-spacing:.5px;font-weight:600">Selected batch</div><div class="mono" style="font-weight:500;margin-top:3px">${b.serial}</div></div>
+  <div class="kv"><span class="k">Quantity</span><b>${fmt(b.qty,b.qty%1?1:0)} tCO2e</b><span class="k">Project</span><span>${p.code} ${p.name}</span><span class="k">Vintage</span><span>${b.vintage}</span><span class="k">Methodology</span><span>${p.method}</span><span class="k">Status</span><span><span class="pill ${pillFor(b.status)}">${statusLabel(b.status)}</span></span><span class="k">Holder</span><span>${b.holder}</span><span class="k">Market</span><span>${b.status==='authorised'?'Article 6, corresponding adjustment applies':'Voluntary market, contribution claim'}</span><span class="k">Token standard</span><span>ERC-3643</span></div>
+  <div class="small muted" style="text-transform:uppercase;letter-spacing:.5px;font-weight:600">Provenance chain</div>
+  <div style="display:flex;flex-direction:column">
+    ${[['Monitoring report accepted','MRV engine · satellite passes and field cores'],['Verification signed','SGS · statement hash anchored'],['Issuance approved','MoTE registrar · 2 of 3 signatures'],['Tokens minted',`${fmt(b.qty,b.qty%1?1:0)} tokens · ${b.tx}`]].map((s,i,a)=>`<div style="display:flex;gap:10px"><div style="display:flex;flex-direction:column;align-items:center"><span style="width:11px;height:11px;border-radius:50%;background:${i===a.length-1?'var(--orange)':'var(--sea)'};flex-shrink:0"></span>${i<a.length-1?'<span style="width:2px;flex:1;background:var(--line)"></span>':''}</div><div style="padding-bottom:${i<a.length-1?10:0}px"><b style="font-size:13px">${s[0]}</b><div class="small muted">${s[1]}</div></div></div>`).join('')}
+    ${b.status==='retired'?`<div style="display:flex;gap:10px;margin-top:10px"><span style="width:11px;height:11px;border-radius:50%;background:var(--warn-fg);flex-shrink:0;margin-top:3px"></span><div><b style="font-size:13px">Retired, tokens burned</b><div class="small muted">Certificate ${b.cert||'on file'}</div></div></div>`:''}
+  </div>
+  <div style="margin-top:auto;display:flex;flex-direction:column;gap:8px">
+    ${canRetire?`<button class="btn primary" id="retireBtn">Retire ${fmt(b.qty)} tCO2e</button>`:''}
+    ${cert?`<button class="btn navy" id="certBtn">View certificate ${cert.id}</button>`:''}
+    ${b.status==='transferred'&&!canRetire?'<div class="small muted">Switch to the Resort buyer role to retire these tokens.</div>':''}
+  </div>`;
+}
+
+function vMarket(){
+  const m=S.market; const p=project(m.listing); const avail=available(p.id);
+  const qty=Math.min(m.qty,Math.max(1,Math.floor(avail)));
+  const sub=qty*p.price, fee=Math.round(sub*0.02);
+  const listings=S.projects.filter(x=>x.status==='Validated');
+  const canBuy = S.role==='buyer' && avail>=1;
+  return `<div class="top"><div class="grow"><h1>Maldives-origin blue carbon</h1><div class="sub">Verified credits from Maldivian seagrass and mangrove projects. Every purchase pays the island council and community fund automatically.</div></div>
+    <div class="card" style="padding:8px 14px;text-align:right"><div class="small muted">Your 2026 footprint to offset</div><b style="font-family:var(--display);font-size:17px">1,840 tCO2e</b> <span class="small" style="color:var(--good-fg)">· ${Math.min(100,Math.round(S.batches.filter(b=>b.status==='retired'&&b.holder.includes('Resort')).reduce((a,b)=>a+b.qty,0)/1840*100))}% retired</span></div>${roleCtl()}</div>
+  ${S.role!=='buyer'?`<div class="alert" style="background:var(--warn-bg)"><i style="background:var(--orange)"></i><div><b>You are viewing as ${roleName()}.</b> Switch the role to Resort buyer to place an order.</div></div>`:''}
+  <div class="grid g3">
+    <div class="span2" style="display:flex;flex-direction:column;gap:12px;min-width:0">
+      ${listings.map(x=>`<button class="listing ${x.id===p.id?'sel':''}" data-listing="${x.id}"><div class="sw" style="background:${x.color}"><span>${x.eco.split(' ')[0]}</span></div><div style="flex:1;min-width:0"><div class="row"><b style="font-family:var(--display);font-size:15px">${x.name}</b><span class="pill ${x.vintage===2026?'p-good':'p-warn'}">Vintage ${x.vintage}</span></div><div class="small muted">${x.code} · ${x.method} · ${fmt(x.area)} ha · ${x.developer}</div><div class="small" style="margin-top:4px">Co-benefits: ${x.cobenefits} · Buffer ${x.buffer*100}% · <b>${fmt(available(x.id))} available</b></div></div><div style="text-align:right"><div class="px">USD ${x.price}</div><div class="small muted">per tCO2e</div></div></button>`).join('')}
+    </div>
+    <div class="card" style="display:flex;flex-direction:column;gap:14px">
+      <h2 style="margin:0">Your order</h2>
+      <div style="padding:10px 12px;border-radius:10px;background:var(--surface-2)"><div class="small muted">Selected project</div><b>${p.name}</b><div class="small muted">USD ${p.price} per tCO2e · ${fmt(avail)} available</div></div>
+      <div><label class="lbl">Quantity, tCO2e</label><div class="qty"><button id="dec" aria-label="Decrease">−</button><div class="tabular">${fmt(qty)}</div><button id="inc" aria-label="Increase">+</button></div>
+      <div class="row" style="margin-top:6px">${[100,250,500].map(n=>`<button class="btn sm" data-q="${n}">${n}</button>`).join('')}<button class="btn sm" data-q="${Math.min(1343,Math.floor(avail))}">Remaining footprint</button></div></div>
+      <div style="display:flex;flex-direction:column;gap:6px;font-size:13px"><div class="row" style="justify-content:space-between"><span class="muted">Credits</span><span class="tabular">USD ${fmt(sub)}</span></div><div class="row" style="justify-content:space-between"><span class="muted">Registry and marketplace fee (2%)</span><span class="tabular">USD ${fmt(fee)}</span></div><div style="height:1px;background:var(--line)"></div><div class="row" style="justify-content:space-between;font-family:var(--display);font-size:18px;font-weight:800"><span>Total</span><span class="tabular">USD ${fmt(sub+fee)}</span></div></div>
+      <div style="padding:10px 12px;border-radius:10px;background:var(--good-bg);font-size:12px;color:var(--good-fg)"><b>Where this money goes</b><div class="row" style="justify-content:space-between"><span>${p.developer}</span><b>USD ${fmt(sub*0.35)}</b></div><div class="row" style="justify-content:space-between"><span>Community fund</span><b>USD ${fmt(sub*0.15)}</b></div><div class="row" style="justify-content:space-between"><span>State (MoFP)</span><b>USD ${fmt(sub*0.40)}</b></div></div>
+      <button class="tog ${m.retire?'on':''}" id="retireTog" aria-pressed="${m.retire}"><span class="k"><i></i></span><span><b style="font-size:13px">Retire immediately</b><div class="small muted">${m.retire?'Tokens are burned on purchase and a certificate is issued':'Tokens stay in your wallet to retire or resell later'}</div></span></button>
+      <button class="btn primary" id="buyBtn" ${canBuy?'':'disabled'} style="height:44px">${m.retire?'Buy and retire':'Buy'} ${fmt(qty)} tCO2e</button>
+      <div class="small muted" style="text-align:center">Settled in USD by bank transfer or stablecoin. Tokens land in your KYC-verified wallet.</div>
+    </div>
+  </div>`;
+}
+
+function vArticle6(){
+  const k=kpis(); const ca=S.loas.reduce((a,l)=>a+l.ca,0);
+  const steps=['Project eligibility','NDC consistency check','Ministerial approval','Counterpart signature','Units tagged and escrowed','First transfer and CA'];
+  const stepOwner=['EPA','MoTE','MoFP','Counterpart','Automatic','Reported to UNFCCC'];
+  return `<div class="top"><div class="grow"><h1>Article 6 authorisations and reporting</h1><div class="sub">Ministry of Finance and Planning, Climate Finance Hub · Letters of Authorisation, corresponding adjustments and UNFCCC submissions generated from the ledger</div></div>${roleCtl()}<button class="btn" id="btrBtn">Generate BTR annex</button><button class="btn primary" id="newLoa" ${S.role==='admin'?'':'disabled'}>New authorisation</button></div>
+  <div class="grid g4">
+    <div class="card kpi"><div class="l">Authorised ITMOs</div><div class="v">${fmt(k.auth+ca)} t</div><div class="d">across ${S.loas.length} letters</div></div>
+    <div class="card kpi"><div class="l">First transferred</div><div class="v">${fmt(ca)} t</div><div class="d" style="color:${ca?'var(--good-fg)':'var(--warn-fg)'}">${ca?'Corresponding adjustment applied':'Awaiting counterpart signature'}</div></div>
+    <div class="card kpi"><div class="l">Corresponding adjustment due</div><div class="v">${fmt(k.auth)} t</div><div class="d">on transfer, added to NDC balance</div></div>
+    <div class="card kpi"><div class="l">Share of proceeds and OMGE</div><div class="v">7%</div><div class="d">5% adaptation fund, 2% cancelled</div></div>
+  </div>
+  <div class="grid g3">
+    <div class="span2" style="display:flex;flex-direction:column;gap:14px;min-width:0">
+      ${S.loas.map(l=>`<div class="card"><div class="row" style="justify-content:space-between"><div><b style="font-family:var(--display);font-size:15px">${l.id}</b> <span class="pill ${l.step>=6?'p-good':l.step>=4?'p-warn':'p-muted'}">${l.step>=6?'Active, transferred':l.step===4?'Pending signature':l.step===5?'Escrowed':'Draft'}</span><div class="small muted">${l.partner} · ${l.use} · ${project(l.project).code} · <b>${fmt(l.qty)} t</b></div></div>${S.role==='admin'&&l.step<6?`<button class="btn sm navy" data-adv="${l.id}">${l.step===3?'Record counterpart signature':l.step===4?'Confirm signature, escrow units':l.step===5?'Execute first transfer':'Advance to '+steps[l.step]}</button>`:''}</div>
+        <div class="steps" style="margin-top:12px">${steps.map((s,i)=>`<div class="s ${i<l.step?'done':i===l.step?'cur':''}"><div class="h"><span class="n">${i+1}</span>${i<steps.length-1?'<span class="ln"></span>':''}</div><b>${s}</b><small>${stepOwner[i]}</small></div>`).join('')}</div></div>`).join('')}
+    </div>
+    <div style="display:flex;flex-direction:column;gap:14px;min-width:0">
+      <div class="card"><h2>NDC emissions balance, 2026</h2><div style="display:flex;flex-direction:column;gap:7px;font-size:13px"><div class="row" style="justify-content:space-between"><span class="muted">Domestic reductions counted</span><b class="tabular">${fmt(k.issued+ca)} t</b></div><div class="row" style="justify-content:space-between"><span class="muted">Less: first transfers (CA)</span><b class="tabular" style="color:var(--warn-fg)">${ca?'−':''}${fmt(ca)} t</b></div><div class="row" style="justify-content:space-between"><span class="muted">Less: OMGE cancellations</span><b class="tabular">${fmt(Math.round(ca*0.02))} t</b></div><div style="height:1px;background:var(--line)"></div><div class="row" style="justify-content:space-between;font-family:var(--display);font-size:16px;font-weight:800"><span>Counts toward NDC</span><span class="tabular">${fmt(k.issued-Math.round(ca*0.02))} t</span></div></div><div class="small muted" style="margin-top:8px">Recomputed from ledger events every block and exported to the Biennial Transparency Report annex.</div></div>
+      <div class="card"><h2>Submissions</h2><div style="display:flex;flex-direction:column;gap:8px;font-size:12.5px">${[['sea','Article 6 annual information, 2025','Submitted May 2026 · hash anchored'],[ca?'sea':'orange','Initial report, cooperative approach A',ca?'Generated on first transfer':'Draft auto-generated · due before first transfer'],['line','BTR annex, 2026','Scheduled Dec 2026']].map(s=>`<div class="row" style="flex-wrap:nowrap;padding:9px 10px;border-radius:8px;background:var(--surface-2)"><i style="width:8px;height:8px;border-radius:50%;background:var(--${s[0]});flex-shrink:0"></i><div><b>${s[1]}</b><div class="muted">${s[2]}</div></div></div>`).join('')}</div></div>
+    </div>
+  </div>`;
+}
+
+function vCerts(){
+  const c=S.certs.find(x=>x.id===S.cert)||S.certs[S.certs.length-1];
+  const p=project(c.project); const b=S.batches.find(x=>x.id===c.batch);
+  const v=S.verify||'';
+  const found = v? S.certs.find(x=>x.id.toLowerCase()===v.trim().toLowerCase()||x.tx.toLowerCase()===v.trim().toLowerCase()) : null;
+  return `<div class="top"><div class="grow"><h1>Retirement certificates</h1><div class="sub">Public verification page · registry.mv/verify · anyone can check a certificate against the ledger</div></div>
+    <label class="sr" for="certSel">Certificate</label><select id="certSel" class="input" style="width:260px">${S.certs.slice().reverse().map(x=>`<option value="${x.id}" ${x.id===c.id?'selected':''}>${x.id} · ${fmt(x.qty,x.qty%1?1:0)} t · ${project(x.project).atoll}</option>`).join('')}</select></div>
+  <div class="card"><div class="row"><label for="vq" class="lbl" style="margin:0">Verify a certificate</label><input id="vq" class="input" style="width:320px" placeholder="Certificate id or transaction hash" value="${v}"><button class="btn navy" id="vBtn">Verify</button>${v?(found?`<span class="pill p-good">Valid · ${found.id} · ${fmt(found.qty,found.qty%1?1:0)} t retired, block ${fmt(found.block)}</span>`:'<span class="pill p-warn">No matching retirement on the ledger</span>'):''}</div></div>
+  <div class="cert">
+    <div class="left"><div><div class="small" style="letter-spacing:2px;text-transform:uppercase;color:#CFE6EC">Certificate of retirement</div><div class="big">${fmt(c.qty,c.qty%1?1:0)}</div><div style="color:#E6F4F1">tonnes of CO2 equivalent, permanently retired</div></div><div style="height:1px;background:rgba(255,255,255,.3)"></div>
+      <div style="display:flex;flex-direction:column;gap:12px;font-size:13px"><div><div class="small" style="color:#CFE6EC">Retired for</div><b>${c.for}</b></div><div><div class="small" style="color:#CFE6EC">Retired by</div><b>${c.by}</b><div style="color:#E6F4F1">${p.atoll} Atoll, Maldives</div></div><div><div class="small" style="color:#CFE6EC">Date and time</div><b>${timeStr(c.ts)} MVT</b></div></div>
+      <div style="margin-top:auto;display:flex;gap:12px;align-items:center"><div style="width:76px;height:76px;border-radius:8px;background:#fff;color:#0B2545;font-size:10px;font-weight:600;display:flex;align-items:center;justify-content:center;text-align:center;padding:6px">[QR code]</div><div class="small" style="color:#E6F4F1">Scan to verify this retirement against the public ledger. The record cannot be altered or reused.</div></div></div>
+    <div class="right"><div class="row" style="justify-content:space-between;align-items:flex-start"><div><div class="small muted">Project</div><h2 style="font-size:22px;margin:2px 0 4px">${p.name}</h2><div class="small muted">${p.code} · ${p.method} · Vintage ${p.vintage} · Developed by ${p.developer} with the Ministry of Tourism and Environment</div></div><span class="pill p-good">Verified on-chain</span></div>
+      <div class="grid g3"><div style="padding:12px 14px;border-radius:10px;background:var(--surface-2)"><div class="small muted">${p.eco.split(' ')[0]} protected by this credit</div><b style="font-family:var(--display);font-size:18px">${(c.qty*p.area/p.annual).toFixed(2)} ha</b></div><div style="padding:12px 14px;border-radius:10px;background:var(--surface-2)"><div class="small muted">Paid to ${p.atoll} community</div><b style="font-family:var(--display);font-size:18px">USD ${fmt(c.qty*p.price*0.5,2)}</b></div><div style="padding:12px 14px;border-radius:10px;background:var(--surface-2)"><div class="small muted">Validator</div><b style="font-family:var(--display);font-size:18px">SGS</b></div></div>
+      <div><div class="small muted" style="text-transform:uppercase;letter-spacing:.5px;font-weight:600;margin-bottom:8px">Ledger record</div><div class="kv"><span class="k">Certificate id</span><span class="mono">${c.id}</span><span class="k">Serial numbers</span><span class="mono">${b?b.serial:'on file'}</span><span class="k">Retirement transaction</span><span class="mono" style="color:var(--teal)">${c.tx}</span><span class="k">Block</span><span class="mono">${fmt(c.block)} · 3 of 3 registry nodes confirmed</span><span class="k">Market and claims</span><span>Voluntary market, contribution claim. Not authorised under Article 6, so no corresponding adjustment applies.</span></div></div>
+      <div class="row" style="margin-top:auto;padding-top:14px;border-top:1px solid var(--line)"><div class="small muted" style="flex:1;min-width:200px">Issued by the Maldives Blue Carbon Registry, operated for the Ministry of Tourism and Environment. Registry technology by Ideofuzion.</div><button class="btn" id="copyCert">Copy verification link</button></div></div>
+  </div>`;
+}
+
+function vField(){
+  const p=project(S.fieldProject||'p3');
+  return `<div class="top"><div class="grow"><h1>Ranger field app</h1><div class="sub">Island council monitoring. Surveys sync to the MRV engine and become part of the project evidence pack.</div></div>${roleCtl()}</div>
+  <div class="grid g2">
+    <div class="phone">
+      <div class="row" style="justify-content:space-between"><div class="row"><img src="${LOGO}" alt="" style="width:20px;height:30px;object-fit:contain"><b style="font-family:var(--display)">Field survey</b></div><span class="pill p-good">Online</span></div>
+      <div><label class="lbl" for="fpj">Project block</label><select id="fpj" class="input">${S.projects.map(x=>`<option value="${x.id}" ${x.id===p.id?'selected':''}>${x.atoll} · ${x.code}</option>`).join('')}</select></div>
+      <div style="padding:10px 12px;border-radius:10px;background:var(--surface-2);font-size:12.5px"><div class="row" style="justify-content:space-between"><span class="muted">GPS</span><span class="mono">1.9412° N, 73.5210° E</span></div><div class="row" style="justify-content:space-between"><span class="muted">Transect</span><span>T-03, 240 m</span></div><div class="row" style="justify-content:space-between"><span class="muted">Last satellite pass</span><span>21 Sep, health ${p.health.toFixed(2)}</span></div></div>
+      <div><label class="lbl" for="fh">Observed canopy or meadow health (0 to 1)</label><input id="fh" type="range" min="0.3" max="1" step="0.01" value="${(S.fieldHealth??p.health).toFixed(2)}" style="width:100%"><div class="row" style="justify-content:space-between" class="small"><span class="small muted">Degraded</span><b id="fhv" class="tabular">${(S.fieldHealth??p.health).toFixed(2)}</b><span class="small muted">Healthy</span></div></div>
+      <div><label class="lbl" for="fn">Notes</label><input id="fn" class="input" placeholder="e.g. new seedlings on the north edge" value="${S.fieldNote||''}"></div>
+      <button class="tog ${S.fieldDist?'on':''}" id="fdist" aria-pressed="${!!S.fieldDist}"><span class="k"><i></i></span><span><b style="font-size:13px">Disturbance observed</b><div class="small muted">Dredging, die-off, dumping or construction</div></span></button>
+      <div class="row"><button class="btn" style="flex:1" id="photoBtn">Attach drone photos</button><span class="small muted" id="photoCt">${S.fieldPhotos?S.fieldPhotos+' attached':'none'}</span></div>
+      <button class="btn primary" id="fieldSubmit" style="height:46px" ${S.role==='ranger'?'':'disabled'}>Submit survey</button>
+      ${S.role!=='ranger'?'<div class="small muted" style="text-align:center">Switch role to Island council ranger to submit.</div>':''}
+    </div>
+    <div style="display:flex;flex-direction:column;gap:14px;min-width:0">
+      <div class="card"><h2>What happens on submit</h2><ol style="margin:0;padding-left:18px;font-size:13px;display:flex;flex-direction:column;gap:6px"><li>The survey is hashed and written to the registry as evidence for ${p.code}.</li><li>The MRV engine compares the observed health index with the latest satellite classification.</li><li>A gap above tolerance, or a disturbance report, raises an alert and freezes the block for the next issuance.</li><li>The evidence appears in the verifier portal for SGS and in the project's evidence pack.</li></ol></div>
+      <div class="card"><h2>Recent surveys</h2><div style="display:flex;flex-direction:column;gap:8px">${S.evidence.slice(0,5).map(e=>`<div style="padding:9px 10px;border-radius:8px;background:var(--surface-2)"><b style="font-size:13px">${e.title}</b><div class="small muted">${project(e.project).code} · ${e.meta}</div></div>`).join('')}</div></div>
+    </div>
+  </div>`;
+}
+
+const roleName = () => ({admin:'Registry admin (MoTE)',buyer:'Resort buyer',ranger:'Island council ranger'})[S.role];
+function roleCtl(){ return `<div class="role"><span class="muted">Role</span><label class="sr" for="roleSel">Role</label><select id="roleSel"><option value="admin" ${S.role==='admin'?'selected':''}>Registry admin (MoTE)</option><option value="buyer" ${S.role==='buyer'?'selected':''}>Resort buyer</option><option value="ranger" ${S.role==='ranger'?'selected':''}>Island council ranger</option></select></div>`; }
+
+/* ---------- charts ---------- */
+function drawBars(id, series, colors, labels){
+  const c=document.getElementById(id); if(!c) return; const dpr=window.devicePixelRatio||1; const W=c.clientWidth, H=c.clientHeight; c.width=W*dpr; c.height=H*dpr; const g=c.getContext('2d'); g.scale(dpr,dpr);
+  const cs=getComputedStyle(document.documentElement); const lineC=cs.getPropertyValue('--line').trim(), txt=cs.getPropertyValue('--muted').trim();
+  const max=Math.max(...series.flat())*1.1; const padL=40,padB=22,padT=8; const n=series[0].length; const gw=(W-padL-8)/n;
+  g.strokeStyle=lineC; g.fillStyle=txt; g.font='11px IBM Plex Sans, sans-serif'; g.textAlign='right';
+  for(let i=0;i<=3;i++){ const y=padT+(H-padB-padT)*(1-i/3); g.beginPath(); g.moveTo(padL,y); g.lineTo(W-8,y); g.stroke(); g.fillText(fmt(Math.round(max*i/3/100)*100),padL-6,y+4); }
+  const bw=gw/(series.length+1);
+  series.forEach((s,si)=>{ s.forEach((v,i)=>{ const h=(H-padB-padT)*v/max; const x=padL+i*gw+bw*0.5+si*bw; const y=H-padB-h; g.fillStyle=cs.getPropertyValue(colors[si]).trim(); g.beginPath(); g.roundRect(x,y,bw-3,h,[3,3,0,0]); g.fill(); }); });
+  g.fillStyle=txt; g.textAlign='center'; labels.forEach((l,i)=>g.fillText(l,padL+i*gw+gw/2,H-6));
+}
+
+/* ---------- render ---------- */
+function render(){
+  const views={overview:vOverview,projects:vProjects,ledger:vLedger,market:vMarket,article6:vArticle6,certs:vCerts,field:vField};
+  const app=document.getElementById('app');
+  app.innerHTML=`<nav class="side" aria-label="Primary"><div class="brand"><img src="${LOGO}" alt="Ideofuzion"><div><b>Blue Carbon<br>Registry</b><small>Republic of Maldives</small></div></div><div class="nav">${NAV.map(([k,l])=>`<a href="#${k}" class="${S.view===k?'active':''}">${svg(k)}<span>${l}</span></a>`).join('')}</div><div class="env"><div style="text-transform:uppercase;letter-spacing:1px;font-size:10.5px">Environment</div><b>Pilot sandbox</b>Sample data · nodes: MoTE, EPA, MoFP<button id="resetBtn">Reset demo data</button></div></nav><main>${(views[S.view]||vOverview)()}</main>`;
+  if(S.view==='overview') drawBars('chart',[S.monthly.map(m=>m[0]),S.monthly.map(m=>m[1])],['--teal','--orange'],['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep']);
+  if(S.view==='projects'){ const p=project(S.selProject); const base=p.area*0.95; const ext=[base*0.98,base*0.99,base*0.985,...Array.from({length:9},(_,i)=>base*(1+0.006*i))]; ext[11]=p.area; drawBars('extent',[ext],['--teal'],['Oct','Nov','Dec','Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep']); }
+  bind();
+}
+function bind(){
+  const $=(s)=>document.querySelector(s);
+  document.querySelectorAll('.nav a').forEach(a=>a.onclick=(e)=>{e.preventDefault(); set(a.getAttribute('href').slice(1));});
+  $('#resetBtn').onclick=()=>confirmBox('Reset demo data','All sample transactions, certificates and surveys made in this browser will be cleared.','Reset',()=>{S=seed(); save(); render(); toast('Demo data reset.');});
+  const r=$('#roleSel'); if(r) r.onchange=()=>{S.role=r.value; save(); render(); toast('Now acting as '+roleName());};
+  document.querySelectorAll('[data-proj]').forEach(tr=>tr.onclick=()=>{S.selProject=tr.dataset.proj; set('projects');});
+  const ps=$('#projSel'); if(ps) ps.onchange=()=>{S.selProject=ps.value; render();};
+  const ib=$('#issueBtn'); if(ib) ib.onclick=()=>{ const p=project(S.selProject); confirmBox('Request issuance',`Issue <b>${fmt(p.annual)} tCO2e</b> for ${p.code} against the accepted monitoring report. ${p.buffer*100}% (${fmt(p.annual*p.buffer)} t) goes to the buffer pool; ${fmt(p.annual*(1-p.buffer))} t becomes tradeable. Requires 2 of 3 registrar signatures.`,'Sign and issue',()=>issue(p.id,p.annual)); };
+  document.querySelectorAll('[data-batch]').forEach(tr=>tr.onclick=()=>{S.selBatch=tr.dataset.batch; render();});
+  ['q','fp','fs'].forEach(id=>{ const el=$('#'+id); if(el) el[id==='q'?'oninput':'onchange']=()=>{S.ledgerFilter={q:$('#q').value,project:$('#fp').value,status:$('#fs').value}; render(); if(id==='q'){const q=$('#q'); q.focus(); q.setSelectionRange(q.value.length,q.value.length);} }; });
+  const rb=$('#retireBtn'); if(rb) rb.onclick=()=>{ const b=S.batches.find(x=>x.id===S.selBatch)||S.batches[0]; confirmBox('Retire credits',`Burn <b>${fmt(b.qty)} tokens</b> (${b.serial}) permanently and issue a public retirement certificate. This cannot be undone.`,'Retire',()=>retireBatch(b.id)); };
+  const cb=$('#certBtn'); if(cb) cb.onclick=()=>{ const b=S.batches.find(x=>x.id===S.selBatch); S.cert=b.cert; set('certs'); };
+  document.querySelectorAll('[data-listing]').forEach(b=>b.onclick=()=>{S.market.listing=b.dataset.listing; S.market.qty=Math.min(S.market.qty,Math.floor(available(b.dataset.listing))||1); save(); render();});
+  const inc=$('#inc'), dec=$('#dec'); const avail=()=>Math.floor(available(S.market.listing));
+  if(inc) inc.onclick=()=>{S.market.qty=Math.min(avail(),S.market.qty+10); render();};
+  if(dec) dec.onclick=()=>{S.market.qty=Math.max(1,S.market.qty-10); render();};
+  document.querySelectorAll('[data-q]').forEach(b=>b.onclick=()=>{S.market.qty=Math.max(1,Math.min(avail(),+b.dataset.q)); render();});
+  const rt=$('#retireTog'); if(rt) rt.onclick=()=>{S.market.retire=!S.market.retire; render();};
+  const bb=$('#buyBtn'); if(bb) bb.onclick=()=>{ const p=project(S.market.listing); const q=Math.min(S.market.qty,avail()); confirmBox('Confirm purchase',`Pay <b>USD ${fmt(q*p.price*1.02)}</b> for ${fmt(q)} tCO2e from ${p.code}${S.market.retire?', retired immediately with a certificate':''}. Benefit shares are paid out by smart contract on settlement.`,'Pay and settle',buy); };
+  document.querySelectorAll('[data-adv]').forEach(b=>b.onclick=()=>advanceLoa(b.dataset.adv));
+  const nl=$('#newLoa'); if(nl) nl.onclick=newLoa;
+  const btr=$('#btrBtn'); if(btr) btr.onclick=()=>toast('BTR annex generated from ledger state at block '+fmt(S.block)+'. Available in Submissions.');
+  const cs=$('#certSel'); if(cs) cs.onchange=()=>{S.cert=cs.value; render();};
+  const vb=$('#vBtn'); if(vb) vb.onclick=()=>{S.verify=$('#vq').value; render();};
+  const vq=$('#vq'); if(vq) vq.onkeydown=(e)=>{ if(e.key==='Enter'){S.verify=vq.value; render();} };
+  const cc=$('#copyCert'); if(cc) cc.onclick=()=>{ const c=S.certs.find(x=>x.id===S.cert)||S.certs[S.certs.length-1]; const link='registry.mv/verify/'+c.id; navigator.clipboard.writeText(link).then(()=>toast('Copied '+link)).catch(()=>toast('Verification link: '+link)); };
+  const fpj=$('#fpj'); if(fpj) fpj.onchange=()=>{S.fieldProject=fpj.value; S.fieldHealth=undefined; render();};
+  const fh=$('#fh'); if(fh) fh.oninput=()=>{S.fieldHealth=+fh.value; $('#fhv').textContent=(+fh.value).toFixed(2);};
+  const fn=$('#fn'); if(fn) fn.oninput=()=>{S.fieldNote=fn.value;};
+  const fd=$('#fdist'); if(fd) fd.onclick=()=>{S.fieldDist=!S.fieldDist; render();};
+  const pb=$('#photoBtn'); if(pb) pb.onclick=()=>{S.fieldPhotos=(S.fieldPhotos||0)+12; $('#photoCt').textContent=S.fieldPhotos+' attached'; toast('12 frames attached, GPS locked.');};
+  const fs2=$('#fieldSubmit'); if(fs2) fs2.onclick=()=>{ const pid=S.fieldProject||'p3'; submitField(pid, S.fieldHealth??project(pid).health, S.fieldNote, S.fieldDist); S.fieldDist=false; S.fieldNote=''; S.fieldPhotos=0; S.fieldHealth=undefined; save(); render(); };
+}
+window.addEventListener('hashchange',()=>{ const v=location.hash.slice(1); if(NAV.some(n=>n[0]===v)&&v!==S.view){S.view=v; render();} });
+window.addEventListener('resize',()=>{ if(S.view==='overview'||S.view==='projects') render(); });
+(function start(){ const v=location.hash.slice(1); if(NAV.some(n=>n[0]===v)) S.view=v; render(); })();
+</script>
+
+</body>
+</html>
